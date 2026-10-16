@@ -61,6 +61,34 @@ pipeline {
                 }
             }
         }
+        stage('Build and Push Image') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+        
+                        IMAGE="siva7598/nginx-demo:build-${BUILD_NUMBER}"
+        
+                        printf '%s' "$DOCKERHUB_PASSWORD" |
+                            docker login \
+                            --username "$DOCKERHUB_USERNAME" \
+                            --password-stdin
+        
+                        docker build -t "$IMAGE" .
+                        docker push "$IMAGE"
+        
+                        docker logout
+                        echo "Published image: $IMAGE"
+                    '''
+                }
+            }
+        }
     }
 
     post {
